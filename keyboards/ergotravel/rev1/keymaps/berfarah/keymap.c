@@ -1,6 +1,6 @@
-﻿#include QMK_KEYBOARD_H
+#include QMK_KEYBOARD_H
 
-extern keymap_config_t keymap_config;
+#include "keymap_alias.h"
 
 enum keyboard_layers {
   _QWERTY = 0, // default layer
@@ -17,6 +17,10 @@ enum custom_keycodes {
 #define KC_ KC_TRNS
 #define KC__ KC_TRNS
 #define _______ KC_TRNS
+
+#define KC_RGB_HUI UG_HUEU
+#define KC_RGB_VAI UG_SATU
+#define KC_RGB_TOG UG_TOGG
 
 // Tap: Escape, Hold: CTRL
 #define KC_CLES CTL_T(KC_ESC)
@@ -161,7 +165,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch(keycode) {
     case KC_AFK:
       if (record->event.pressed) {
-        SEND_STRING(SS_DOWN(X_LCTRL)SS_DOWN(X_LSHIFT)SS_TAP(X_POWER)SS_UP(X_LSHIFT)SS_UP(X_LCTRL));
+        tap_code16(LCTL(LSFT(KC_PWR)));
       }
       return false; break;
   }
