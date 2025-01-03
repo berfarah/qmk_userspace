@@ -25,23 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Hand configuration
 // #define MASTER_LEFT
 #define MASTER_RIGHT
-// #define EE_HANDS
-
-// Underglow
-#undef RGBLED_NUM
-#define RGBLIGHT_ANIMATIONS
-#define RGBLED_NUM 8
-#define RGBLED_SPLIT { 4, 4 }
-#define RGBLIGHT_HUE_STEP 8
-#define RGBLIGHT_SAT_STEP 8
-#define RGBLIGHT_VAL_STEP 8
 
 // Rotary Encoder Settings
-#define ENCODERS_PAD_A { F5 }
-#define ENCODERS_PAD_B { F4 }
-#define ENCODER_DIRECTION_FLIP
-#define ENCODERS_PAD_A_RIGHT { F4 }
-#define ENCODERS_PAD_B_RIGHT { F5 }
 #define ENCODER_RESOLUTION 4
 
 // Key actuation
