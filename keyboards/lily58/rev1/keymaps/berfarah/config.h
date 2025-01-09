@@ -21,10 +21,12 @@
 #pragma once
 
 #define QUICK_TAP_TERM 0
-#define TAP_CODE_DELAY 20
 #define TAPPING_TERM 100
 
 #define MASTER_RIGHT
+
+#undef OLED_FONT_H
+#define OLED_FONT_H "mygldcfont.h"
 
 #undef  RGBLIGHT_LED_COUNT
 #define RGBLIGHT_ANIMATIONS
@@ -39,7 +41,7 @@
 #define ENCODERS_PAD_B {}
 #define ENCODERS_PAD_A_RIGHT { F4 }
 #define ENCODERS_PAD_B_RIGHT { F5 }
-#define ENCODER_RESOLUTION 1
+#define ENCODER_RESOLUTION 4
 #endif
 
 // Underglow

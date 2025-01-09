@@ -209,7 +209,7 @@ void write_bar(char* buffer, bool selected, char *prefix, int value, int divisor
     int amount = value*10 / divisor;
     amount = amount > 10 ? 10 : amount;
     for (int i = 0; i < amount; i++) {
-        buffer[i+6] = 0x07;
+        buffer[i+6] = 0x7f;
     }
 
     oled_write_ln(buffer, false);
@@ -233,7 +233,7 @@ void render_rgb_backlight(void) {
     oled_write_ln(mode_str, false);
 }
 
-
+char encoder_line[24] = {};
 void write_oled_state(void) {
     uint8_t current_layer = get_highest_layer(layer_state);
 
@@ -244,8 +244,9 @@ void write_oled_state(void) {
 #endif
         oled_write_ln(read_custom_layer_state(), false);
         oled_write_ln(read_keylog(), false);
-        oled_write_ln(current_layer == _QWERTY ? "VOLUME" : "BRIGHTNESS", false);
-        oled_write_ln("", false);
+        sprintf(encoder_line, "%s %s", IS_LAYER_ON(_WIN) ? "\x97\x98" : "\x95\x96", current_layer == _QWERTY ? "VOLUME" : "BRIGHTNESS");
+        oled_write_ln(encoder_line, false);
+        oled_write_ln(IS_LAYER_ON(_WIN) ? "\xB7\xB8" : "\xB5\xB6", false);
 #ifdef RGBLIGHT_ENABLE
     }
 #endif
