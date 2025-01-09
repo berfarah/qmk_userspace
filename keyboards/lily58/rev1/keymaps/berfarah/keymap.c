@@ -18,6 +18,7 @@ enum keyboard_layers {
   _NUMS,       // numbers + symbols
   _MOVE,       // VIM movement
   _WINDOW,     // Window movement
+  _RGB,        // RGB configuration
 };
 
 enum custom_keycodes {
@@ -26,8 +27,9 @@ enum custom_keycodes {
   KC_WINU,
   KC_WIND,
   KC_WINR,
-  KC_LED,
-  KC_KNOB,
+  KC_VOL,
+  KC_BRGH,
+  KC_RGBK,
 };
 
 
@@ -39,6 +41,8 @@ enum custom_keycodes {
 #define KC_WIN TG(_WIN)
 // Toggle to NUMS layer
 #define KC_NUMS MO(_NUMS)
+// Shift to RGB layer
+#define KC_RGBM MO(_RGB)
 // Tap: ;, Hold: Toggle to VIM movement layer
 #define KC_VSCN LT(_MOVE, KC_SCLN)
 // Tap: /, Hold: Toggle to Window movement layer
@@ -70,7 +74,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // |----+----+----+----+----+----|              |----+----+----+----+----+----|
       CLES, A  , S  , D  , F  , G  ,                H  , J  , K  , L  ,VSCN,QUOT,
   // |----+----+----+----+----+----|----.    ,----|----+----+----+----+----+----|
-      LSFT, Z  , X  , C  , V  , B  ,LED ,     KNOB, N  , M  ,COMM,DOT ,WSLH,RSFT,
+      LSFT, Z  , X  , C  , V  , B  ,RGBM,     MUTE, N  , M  ,COMM,DOT ,WSLH,RSFT,
   // `-------------------------------+--'    '----+-----------------------------'
                   LALT,NUMS,LGF, SPC ,        BSPC,ENT ,NUMS,WIN
   //             `-------------------'       '-------------------'
@@ -131,6 +135,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                    _  , _  , _  , _  ,         _  , _  , _  , _
   //             `-------------------'       '-------------------'
   ),
+  // Configure RGB
+  [_RGB] = LAYOUT_kc(
+  // ,-----------------------------.              ,-----------------------------.
+       _  , _  , _  , _  , _  , _  ,                _  , _  , _  , _  , _  , _  ,
+  // |----+----+----+----+----+----|              |----+----+----+----+----+----|
+       _  , _  , _  , _  , _  , _  ,                _  , _  , _  , _  , _  , _  ,
+  // |----+----+----+----+----+----|              |----+----+----+----+----+----|
+       _  , _  , _  , _  , _  , _  ,                _  , _  , _  , _  , _  , _  ,
+  // |----+----+----+----+----+----|----.    ,----|----+----+----+----+----+----|
+       _  , _  , _  , _  , _  , _  , _  ,     RGBK, _  , _  , _  , _  , _  , _  ,
+  // `-------------------------------+--'    '----+-----------------------------'
+                   _  , _  , _  , _  ,         _  , _  , _  , _
+  //             `-------------------'       '-------------------'
+  ),
 };
 
 #ifdef RGBLIGHT_ENABLE
@@ -144,9 +162,7 @@ void matrix_init_user(void) {
 }
 
 enum rotary_mode {
-  VOLUME = 0,
-  BRIGHTNESS,
-  LED_BRIGHTNESS,
+  LED_BRIGHTNESS = 0,
   LED_HUE,
   LED_SATURATION,
   LED_MODE,
@@ -229,34 +245,21 @@ void render_rgb_backlight(void) {
 }
 
 
-char rotary_message[24];
 void write_oled_state(void) {
-  switch(CURRENT_ROTARY_MODE) {
-    case VOLUME:
-      snprintf(rotary_message, sizeof(rotary_message), "VOLUME");
-      break;
-    case BRIGHTNESS:
-      snprintf(rotary_message, sizeof(rotary_message), "BRIGHTNESS");
-      break;
-  }
+  uint8_t current_layer = get_highest_layer(layer_state);
 
-  switch(CURRENT_ROTARY_MODE) {
-    case VOLUME:
-    case BRIGHTNESS:
+#ifdef RGBLIGHT_ENABLE
+  if (current_layer == _RGB) {
+    render_rgb_backlight();
+  } else {
+#endif
       oled_write_ln(read_custom_layer_state(), false);
       oled_write_ln(read_keylog(), false);
-      oled_write_ln(rotary_message, false);
+      oled_write_ln(current_layer == _QWERTY ? "VOLUME" : "BRIGHTNESS", false);
       oled_write_ln("", false);
-      break;
-    #ifdef RGBLIGHT_ENABLE
-    case LED_BRIGHTNESS:
-    case LED_HUE:
-    case LED_SATURATION:
-    case LED_MODE:
-      render_rgb_backlight();
-      break;
-    #endif
+#ifdef RGBLIGHT_ENABLE
   }
+#endif
 }
 
 const char *read_logo(void);
@@ -264,7 +267,6 @@ bool oled_task_user(void) {
   if (is_keyboard_master()) {
     // If you want to change the display of OLED, you need to change here
     write_oled_state();
-    // oled_write_ln(read_keylogs(), false);
     // oled_write_ln(read_mode_icon(keymap_config.swap_lalt_lgui), false);
     // oled_write_ln(read_host_led_state(), false);
     // oled_write_ln(read_timelog(), false);
@@ -276,65 +278,66 @@ bool oled_task_user(void) {
 #endif // OLED Driver
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
-    switch(CURRENT_ROTARY_MODE) {
-      case VOLUME:
-        if (clockwise) {
-          tap_code16(KC_VOLD);
-        } else {
-          tap_code16(KC_VOLU);
-        }
-        break;
-      case BRIGHTNESS:
-        if (clockwise) {
-          tap_code16(KC_BRIGHTNESS_DOWN);
-        } else {
-          tap_code16(KC_BRIGHTNESS_UP);
-        }
-        break;
-      case LED_BRIGHTNESS:
-      #ifdef RGBLIGHT_ENABLE
-        if (clockwise) {
-          rgblight_decrease_val();
-        } else {
-          rgblight_increase_val();
-        }
-        #endif
-        break;
-      case LED_HUE:
-      #ifdef RGBLIGHT_ENABLE
-        if (clockwise) {
-          rgblight_decrease_hue();
-        } else {
-          rgblight_increase_hue();
-        }
-        #endif
-        break;
-      case LED_SATURATION:
-      #ifdef RGBLIGHT_ENABLE
-        if (clockwise) {
-          rgblight_decrease_sat();
-        } else {
-          rgblight_increase_sat();
-        }
-        #endif
-        break;
-      case LED_MODE:
-      #ifdef RGBLIGHT_ENABLE
-        if (clockwise) {
-          rgblight_step_reverse();
-        } else {
-          rgblight_step();
-        }
-        #endif
-        break;
-      default:
+    uint8_t current_layer = get_highest_layer(layer_state);
+    switch(current_layer) {
+      case _QWERTY:
         if (clockwise) {
           tap_code(KC_VOLD);
         } else {
           tap_code(KC_VOLU);
         }
         break;
+      case _NUMS:
+        if (clockwise) {
+          tap_code(KC_BRIGHTNESS_DOWN);
+        } else {
+          tap_code(KC_BRIGHTNESS_UP);
+        }
+        break;
+#ifdef RGBLIGHT_ENABLE
+      case _RGB:
+        switch(CURRENT_ROTARY_MODE) {
+        case LED_BRIGHTNESS:
+        #ifdef RGBLIGHT_ENABLE
+            if (clockwise) {
+              rgblight_decrease_val();
+            } else {
+              rgblight_increase_val();
+            }
+            #endif
+            break;
+        case LED_HUE:
+        #ifdef RGBLIGHT_ENABLE
+            if (clockwise) {
+              rgblight_decrease_hue();
+            } else {
+              rgblight_increase_hue();
+            }
+            #endif
+            break;
+        case LED_SATURATION:
+        #ifdef RGBLIGHT_ENABLE
+            if (clockwise) {
+              rgblight_decrease_sat();
+            } else {
+              rgblight_increase_sat();
+            }
+            #endif
+            break;
+        case LED_MODE:
+        #ifdef RGBLIGHT_ENABLE
+            if (clockwise) {
+              rgblight_step_reverse();
+            } else {
+              rgblight_step();
+            }
+            #endif
+            break;
+        }
+        break;
+#endif
     }
+
   return false;
 }
 
@@ -350,25 +353,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   bool is_windows_os = IS_LAYER_ON(_WIN);
 
   switch (keycode) {
-    case KC_LED:
+    case KC_RGBK:
       if (record->event.pressed) {
-        CURRENT_ROTARY_MODE = BRIGHTNESS;
-        return false;
-      } else {
-        CURRENT_ROTARY_MODE = VOLUME;
-        return false;
-      }
-      break;
-    case KC_KNOB:
-      if (record->event.pressed) {
-        switch(CURRENT_ROTARY_MODE) {
-          case VOLUME:
-            tap_code(KC_MUTE);
-            break;
-          case LED_MODE:
-            CURRENT_ROTARY_MODE = BRIGHTNESS;
-            break;
-          default:
+        if (CURRENT_ROTARY_MODE == LED_MODE) {
+            CURRENT_ROTARY_MODE = LED_BRIGHTNESS;
+        } else {
             CURRENT_ROTARY_MODE++;
         }
         return false;
