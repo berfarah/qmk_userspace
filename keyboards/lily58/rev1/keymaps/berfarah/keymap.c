@@ -150,9 +150,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 enum rotary_mode {
-    LED_BRIGHTNESS = 0,
-    LED_HUE,
+    LED_HUE = 0,
     LED_SATURATION,
+    LED_BRIGHTNESS,
     LED_MODE,
 };
 int CURRENT_ROTARY_MODE = 0;
@@ -220,15 +220,16 @@ void write_bar(char* buffer, bool selected, char *prefix, int value, int divisor
 // void set_timelog(void);
 // const char *read_timelog(void);
 
-char val_bar[24] = {};
-char hue_bar[24] = {};
+char hue_str[24] = {};
 char sat_bar[24] = {};
+char val_bar[24] = {};
 char mode_str[24] = {};
 void render_rgb_backlight(void) {
-    write_bar(val_bar, CURRENT_ROTARY_MODE == LED_BRIGHTNESS, "Val", rgblight_config.val, 255);
-    write_bar(hue_bar, CURRENT_ROTARY_MODE == LED_HUE, "Hue", rgblight_config.hue, 255);
+    sprintf(hue_str, "%s %s %d", CURRENT_ROTARY_MODE == LED_HUE ? "*" : " ", "Hue", rgblight_config.hue);
+    oled_write_ln(hue_str, false);
     write_bar(sat_bar, CURRENT_ROTARY_MODE == LED_SATURATION, "Sat", rgblight_config.sat, 255);
-    sprintf(mode_str, "%s %s: %s", CURRENT_ROTARY_MODE == LED_MODE ? "*" : " ", "Mod", "dno");
+    write_bar(val_bar, CURRENT_ROTARY_MODE == LED_BRIGHTNESS, "Val", rgblight_config.val, 255);
+    sprintf(mode_str, "%s %s %d", CURRENT_ROTARY_MODE == LED_MODE ? "*" : " ", "Mod", rgblight_config.mode);
     oled_write_ln(mode_str, false);
 }
 
@@ -336,7 +337,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_RGBK:
             if (record->event.pressed) {
                 if (CURRENT_ROTARY_MODE == LED_MODE) {
-                    CURRENT_ROTARY_MODE = LED_BRIGHTNESS;
+                    CURRENT_ROTARY_MODE = LED_HUE;
                 } else {
                     CURRENT_ROTARY_MODE++;
                 }
@@ -345,7 +346,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
         case KC_AFK:
             if (record->event.pressed) {
-                is_windows_os ? tap_code16(LGUI(KC_L)) : tap_code16(LCTL(LSFT(KC_PWR)));
+                is_windows_os ? tap_code16(LGUI(KC_L)) : tap_code16(LGUI(LCTL(KC_Q)));
                 return false;
             }
             break;
