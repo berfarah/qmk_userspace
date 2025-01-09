@@ -27,8 +27,6 @@ enum custom_keycodes {
     KC_WINU,
     KC_WIND,
     KC_WINR,
-    KC_VOL,
-    KC_BRGH,
     KC_RGBK,
 };
 
@@ -150,16 +148,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
             //             `-------------------'       '-------------------'
             ),
 };
-
-#ifdef RGBLIGHT_ENABLE
-int RGB_current_mode;
-#endif
-
-void matrix_init_user(void) {
-#ifdef RGBLIGHT_ENABLE
-    RGB_current_mode = rgblight_config.mode;
-#endif
-}
 
 enum rotary_mode {
     LED_BRIGHTNESS = 0,
@@ -298,40 +286,32 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         case _RGB:
             switch(CURRENT_ROTARY_MODE) {
                 case LED_BRIGHTNESS:
-#ifdef RGBLIGHT_ENABLE
                     if (clockwise) {
                         rgblight_decrease_val();
                     } else {
                         rgblight_increase_val();
                     }
-#endif
                     break;
                 case LED_HUE:
-#ifdef RGBLIGHT_ENABLE
                     if (clockwise) {
                         rgblight_decrease_hue();
                     } else {
                         rgblight_increase_hue();
                     }
-#endif
                     break;
                 case LED_SATURATION:
-#ifdef RGBLIGHT_ENABLE
                     if (clockwise) {
                         rgblight_decrease_sat();
                     } else {
                         rgblight_increase_sat();
                     }
-#endif
                     break;
                 case LED_MODE:
-#ifdef RGBLIGHT_ENABLE
                     if (clockwise) {
                         rgblight_step_reverse();
                     } else {
                         rgblight_step();
                     }
-#endif
                     break;
             }
             break;
@@ -399,10 +379,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 // Runs on startup – detect what operating system we're on, enable windows layer
 // where needed.
-bool process_detected_host_os_kb(os_variant_t detected_os) {
-    if (!process_detected_host_os_user(detected_os)) {
-        return false;
-    }
+bool process_detected_host_os_user(os_variant_t detected_os) {
     switch (detected_os) {
         case OS_MACOS:
         case OS_IOS:
