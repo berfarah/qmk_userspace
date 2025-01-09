@@ -30,7 +30,7 @@
 #define RGBLIGHT_ANIMATIONS
 #define RGBLIGHT_LED_COUNT 8
 #define RGBLED_SPLIT { 4, 4 }
-#define RGBLIGHT_HUE_STEP 8
+#define RGBLIGHT_HUE_STEP 1
 #define RGBLIGHT_SAT_STEP 8
 #define RGBLIGHT_VAL_STEP 8
 
@@ -39,7 +39,7 @@
 #define ENCODERS_PAD_B {}
 #define ENCODERS_PAD_A_RIGHT { F4 }
 #define ENCODERS_PAD_B_RIGHT { F5 }
-#define ENCODER_RESOLUTION 4
+#define ENCODER_RESOLUTION 1
 #endif
 
 // Underglow
