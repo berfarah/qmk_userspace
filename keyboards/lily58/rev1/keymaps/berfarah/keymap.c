@@ -7,7 +7,6 @@
 
 #include "keymap_alias.h"
 
-
 #ifdef RGBLIGHT_ENABLE
 //Following line allows macro to read current RGB settings
 extern rgblight_config_t rgblight_config;
@@ -53,6 +52,8 @@ enum custom_keycodes {
 #define KC_WTHL LCTL(LALT(KC_LEFT))
 #define KC_WTHR LCTL(LALT(KC_RIGHT))
 
+#define KC_LGF LGUI_T(KC_F19)
+
 #define KC_VIMB LALT(KC_LEFT)
 #define KC_LGUW LGUI(KC_W)
 #define KC_CTAB LCTL(KC_TAB)
@@ -71,7 +72,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // |----+----+----+----+----+----|----.    ,----|----+----+----+----+----+----|
       LSFT, Z  , X  , C  , V  , B  ,LED ,     KNOB, N  , M  ,COMM,DOT ,WSLH,RSFT,
   // `-------------------------------+--'    '----+-----------------------------'
-                  LALT,NUMS,LGUI,SPC ,        BSPC,ENT ,NUMS,WIN
+                  LALT,NUMS,LGF, SPC ,        BSPC,ENT ,NUMS,WIN
   //             `-------------------'       '-------------------'
   ),
   // Windows mode
@@ -136,15 +137,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 int RGB_current_mode;
 #endif
 
-// Setting ADJUST layer RGB back to default
-void update_tri_layer_RGB(uint8_t layer1, uint8_t layer2, uint8_t layer3) {
-  if (IS_LAYER_ON(layer1) && IS_LAYER_ON(layer2)) {
-    layer_on(layer3);
-  } else {
-    layer_off(layer3);
-  }
-}
-
 void matrix_init_user(void) {
     #ifdef RGBLIGHT_ENABLE
       RGB_current_mode = rgblight_config.mode;
@@ -163,16 +155,10 @@ int CURRENT_ROTARY_MODE = 0;
 
 
 #ifdef OLED_ENABLE
-
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-  /* if (is_keyboard_master()) { */
-  /*   return OLED_ROTATION_270; */
-  /* } */
-  /* return OLED_ROTATION_180; */
-  if (!is_keyboard_master())
-    return OLED_ROTATION_180;
-  return rotation;
+  return is_keyboard_master() ? rotation : OLED_ROTATION_180;
 }
+
 
 #define L_QWERTY 0
 #define L_WIN 2
@@ -209,19 +195,42 @@ const char *read_custom_layer_state(void) {
 
 
 // When add source files to SRC in rules.mk, you can use functions.
-const char *read_layer_state(void);
-const char *read_logo(void);
-void set_keylog(uint16_t keycode, keyrecord_t *record);
 const char *read_keylog(void);
-const char *read_keylogs(void);
+
+void write_bar(char* buffer, bool selected, char *prefix, int value, int divisor) {
+    char *seltext = selected ? "*" : " ";
+    sprintf(buffer, "%s %s           ", seltext, prefix);
+
+    // Replace the blanks with white squares based on % of value
+    int amount = value*10 / divisor;
+    amount = amount > 10 ? 10 : amount;
+    for (int i = 0; i < amount; i++) {
+        buffer[i+6] = 0x07;
+    }
+
+    oled_write_ln(buffer, false);
+}
 
 // const char *read_mode_icon(bool swap);
 // const char *read_host_led_state(void);
 // void set_timelog(void);
 // const char *read_timelog(void);
 
+char val_bar[24] = {};
+char hue_bar[24] = {};
+char sat_bar[24] = {};
+char mode_str[24] = {};
+void render_rgb_backlight(void) {
+    write_bar(val_bar, CURRENT_ROTARY_MODE == LED_BRIGHTNESS, "Val", rgblight_config.val, 255);
+    write_bar(hue_bar, CURRENT_ROTARY_MODE == LED_HUE, "Hue", rgblight_config.hue, 255);
+    write_bar(sat_bar, CURRENT_ROTARY_MODE == LED_SATURATION, "Sat", rgblight_config.sat, 255);
+    sprintf(mode_str, "%s %s: %s", CURRENT_ROTARY_MODE == LED_MODE ? "*" : " ", "Mod", "dno");
+    oled_write_ln(mode_str, false);
+}
+
+
 char rotary_message[24];
-const char *read_rotary(void) {
+void write_oled_state(void) {
   switch(CURRENT_ROTARY_MODE) {
     case VOLUME:
       snprintf(rotary_message, sizeof(rotary_message), "VOLUME");
@@ -229,36 +238,32 @@ const char *read_rotary(void) {
     case BRIGHTNESS:
       snprintf(rotary_message, sizeof(rotary_message), "BRIGHTNESS");
       break;
-    case LED_BRIGHTNESS:
-      #ifdef RGBLIGHT_ENABLE
-      snprintf(rotary_message, sizeof(rotary_message), "LED: VAL  - %d%%", rgblight_config.val*100/255);
-      #endif
-      break;
-    case LED_HUE:
-      #ifdef RGBLIGHT_ENABLE
-      snprintf(rotary_message, sizeof(rotary_message), "LED: HUE  - %d", rgblight_config.hue);
-      #endif
-      break;
-    case LED_SATURATION:
-      #ifdef RGBLIGHT_ENABLE
-      snprintf(rotary_message, sizeof(rotary_message), "LED: SAT  - %d%%", rgblight_config.sat*100/255);
-      #endif
-      break;
-    case LED_MODE:
-      #ifdef RGBLIGHT_ENABLE
-      snprintf(rotary_message, sizeof(rotary_message), "LED: MODE - %d", rgblight_config.mode);
-      #endif
-      break;
   }
-  return rotary_message;
+
+  switch(CURRENT_ROTARY_MODE) {
+    case VOLUME:
+    case BRIGHTNESS:
+      oled_write_ln(read_custom_layer_state(), false);
+      oled_write_ln(read_keylog(), false);
+      oled_write_ln(rotary_message, false);
+      oled_write_ln("", false);
+      break;
+    #ifdef RGBLIGHT_ENABLE
+    case LED_BRIGHTNESS:
+    case LED_HUE:
+    case LED_SATURATION:
+    case LED_MODE:
+      render_rgb_backlight();
+      break;
+    #endif
+  }
 }
 
+const char *read_logo(void);
 bool oled_task_user(void) {
   if (is_keyboard_master()) {
     // If you want to change the display of OLED, you need to change here
-    oled_write_ln(read_custom_layer_state(), false);
-    oled_write_ln(read_keylog(), false);
-    oled_write_ln(read_rotary(), false);
+    write_oled_state();
     // oled_write_ln(read_keylogs(), false);
     // oled_write_ln(read_mode_icon(keymap_config.swap_lalt_lgui), false);
     // oled_write_ln(read_host_led_state(), false);
@@ -268,25 +273,22 @@ bool oled_task_user(void) {
   }
   return false;
 }
-
 #endif // OLED Driver
 
-#ifdef ENCODER_ENABLE
 bool encoder_update_user(uint8_t index, bool clockwise) {
-  if (index == 0) {
     switch(CURRENT_ROTARY_MODE) {
       case VOLUME:
         if (clockwise) {
-          tap_code(KC_VOLD);
+          tap_code16(KC_VOLD);
         } else {
-          tap_code(KC_VOLU);
+          tap_code16(KC_VOLU);
         }
         break;
       case BRIGHTNESS:
         if (clockwise) {
-          tap_code(KC_BRIGHTNESS_DOWN);
+          tap_code16(KC_BRIGHTNESS_DOWN);
         } else {
-          tap_code(KC_BRIGHTNESS_UP);
+          tap_code16(KC_BRIGHTNESS_UP);
         }
         break;
       case LED_BRIGHTNESS:
@@ -325,12 +327,18 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         }
         #endif
         break;
+      default:
+        if (clockwise) {
+          tap_code(KC_VOLD);
+        } else {
+          tap_code(KC_VOLU);
+        }
+        break;
     }
-  }
-  return true;
+  return false;
 }
-#endif
 
+void set_keylog(uint16_t keycode, keyrecord_t *record);
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (record->event.pressed) {
 #ifdef OLED_ENABLE
@@ -345,8 +353,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case KC_LED:
       if (record->event.pressed) {
         CURRENT_ROTARY_MODE = BRIGHTNESS;
+        return false;
       } else {
         CURRENT_ROTARY_MODE = VOLUME;
+        return false;
       }
       break;
     case KC_KNOB:
@@ -361,6 +371,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
           default:
             CURRENT_ROTARY_MODE++;
         }
+        return false;
       }
       break;
     case KC_AFK:
