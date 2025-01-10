@@ -22,6 +22,7 @@
 
 #define QUICK_TAP_TERM 0
 #define TAPPING_TERM 100
+// Consider per-key tapping term with shorter timeout for LGUI if it's too annoying
 
 #define MASTER_RIGHT
 
@@ -36,6 +37,9 @@
 #define RGBLIGHT_SAT_STEP 8
 #define RGBLIGHT_VAL_STEP 8
 
+#define RGB_MATRIX_SLEEP
+#define RGB_MATRIX_TIMEOUT 60000
+
 #ifdef ENCODER_ENABLE
 #define ENCODERS_PAD_A {}
 #define ENCODERS_PAD_B {}
@@ -43,10 +47,3 @@
 #define ENCODERS_PAD_B_RIGHT { F5 }
 #define ENCODER_RESOLUTION 4
 #endif
-
-// Underglow
-/*
-#undef RGBLIGHT_LED_COUNT
-#define RGBLIGHT_LED_COUNT 14    // Number of LEDs
-#define RGBLIGHT_SLEEP
-*/
