@@ -32,17 +32,12 @@ static bool rgb_move_layer(effect_params_t* params) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
     for (uint8_t i = led_min; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
-        RGB rgb;
         switch(i) {
-        case 49 ... 51: // Media keys are green
-            hsv_t green = {HSV_GREEN};
-            rgb = rgb_matrix_hsv_to_rgb(green);
-            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+        case 49 ... 51: // Media keys are gold
+            rgb_matrix_set_color(i, RGB_GOLDENROD);
             break;
-        case 53 ... 56: // Movement keys are blue
-            hsv_t blue = {HSV_BLUE};
-            rgb = rgb_matrix_hsv_to_rgb(blue);
-            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+        case 53 ... 56: // Movement keys are purple
+            rgb_matrix_set_color(i, RGB_PURPLE);
             break;
         default:
             // Turn off
@@ -61,9 +56,7 @@ static bool rgb_window_layer(effect_params_t* params) {
         case 53 ... 56: // Window move keys are blue
         case 61:
         case 64:
-            hsv_t hsv = {HSV_BLUE}; // Blue
-            RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
-            rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+            rgb_matrix_set_color(i, RGB_PURPLE);
             break;
         default:
             // Turn off
