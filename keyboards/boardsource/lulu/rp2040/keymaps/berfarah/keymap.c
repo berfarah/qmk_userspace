@@ -405,3 +405,12 @@ bool process_detected_host_os_user(os_variant_t detected_os) {
 
     return true;
 }
+
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch(keycode) {
+        case LGUI_T(KC_F19):
+            return 70;
+        default:
+            return TAPPING_TERM;
+    }
+}
