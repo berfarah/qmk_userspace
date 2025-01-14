@@ -316,22 +316,6 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     return false;
 }
 
-int selected_mode_user = RGB_MATRIX_GRADIENT_UP_DOWN;
-layer_state_t layer_state_set_user(layer_state_t state) {
-    switch(get_highest_layer(state)) {
-        case _MOVE:
-            rgb_matrix_mode(RGB_MATRIX_CUSTOM_rgb_move_layer);
-            break;
-        case _WINDOW:
-            rgb_matrix_mode(RGB_MATRIX_CUSTOM_rgb_window_layer);
-            break;
-        default:
-            rgb_matrix_mode(selected_mode_user);
-            break;
-    }
-    return state;
-}
-
 /* void set_keylog(uint16_t keycode, keyrecord_t *record); */
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 /*     if (record->event.pressed) { */
